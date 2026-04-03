@@ -208,7 +208,7 @@ main{max-width:780px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
 .btn-secondary:hover{border-color:var(--gold);color:var(--gold);}
 
 /* NAV BAR */
-.qnav-wrap{margin-bottom:1.2rem;overflow-x:auto;padding:3px 3px 4px 3px;}
+.qnav-wrap{margin-bottom:1.2rem;overflow-x:auto;padding:3px 3px 4px 3px;-webkit-overflow-scrolling:touch;touch-action:pan-x pinch-zoom;overscroll-behavior-x:contain;}
 .qnav-wrap::-webkit-scrollbar{height:5px;}
 .qnav-wrap::-webkit-scrollbar-track{background:var(--navy-mid);border-radius:3px;}
 .qnav-wrap::-webkit-scrollbar-thumb{background:var(--gold);border-radius:3px;}
@@ -222,6 +222,8 @@ main{max-width:780px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
 .qnav-dot.answered-ko{background:#2b0d0d;border-color:var(--red);color:var(--red);}
 .qnav-dot.answered-sel{background:rgba(201,168,76,.18);border-color:var(--gold);color:var(--gold-light);}
 .qnav-dot.unanswered{background:var(--navy);border-color:var(--navy-light);color:var(--gray-dim);}
+.qnav-dot,.opt-btn{touch-action:manipulation;}
+.opt-btn.kbd-focus{border-color:var(--gold);box-shadow:0 0 0 2px rgba(201,168,76,.22);}
 
 @media(max-width:760px){
   header{padding:0 .85rem;height:56px;}
@@ -329,6 +331,7 @@ body.light{
 body.light header{box-shadow:0 1px 4px rgba(0,0,0,.08);}
 body.light .opt-btn.correct{color:#0d5f2a;}
 body.light .opt-btn.wrong{color:#8b1a1a;}
+body.light .opt-btn.kbd-focus{box-shadow:0 0 0 2px rgba(138,101,24,.22);}
 body.light .feedback-box.ok{color:#1a7a3a;background:rgba(46,204,113,.1);border-color:rgba(46,204,113,.3);}
 body.light .feedback-box.ko{color:#8b1a1a;background:rgba(231,76,60,.08);border-color:rgba(231,76,60,.25);}
 body.light .mi-a{color:#1a7a3a;}
@@ -1746,6 +1749,7 @@ function retryFlagged(){
 }
 
 let shortcutOpen = false;
+let quizOptionFocus = 0;
 
 function getShortcutContext(screenId){
   if(screenId==='scr-quiz') return 'quiz';
@@ -1756,9 +1760,10 @@ function getShortcutContext(screenId){
 
 function shortcutRowsFor(ctx){
   if(ctx==='quiz') return [
-    ['A/B/C/D','Responder opción'],
-    ['← / →','Mover pregunta'],
-    ['F','Marcar (flag)']
+    ['↑ / ↓','Mover entre respuestas'],
+    ['Enter','Elegir respuesta'],
+    ['A/B/C/D','Responder directo'],
+    ...(mode==='exam' && examCfg.hardcore ? [] : [['← / →','Mover pregunta'],['F','Marcar (flag)']])
   ];
   if(ctx==='flash') return [
     ['← / →','Anterior / siguiente'],
@@ -1803,6 +1808,27 @@ function toggleShortcutHelp(){
   panel.hidden = !shortcutOpen;
 }
 
+function getQuizOptionButtons(){
+  return Array.from(document.querySelectorAll('#q-options .opt-btn'));
+}
+
+function setQuizOptionFocus(nextIdx, focusDom){
+  const btns = getQuizOptionButtons().filter(btn=>!btn.disabled);
+  if(!btns.length){
+    quizOptionFocus = 0;
+    getQuizOptionButtons().forEach(btn=>btn.classList.remove('kbd-focus'));
+    return;
+  }
+  const safeIdx = Math.max(0, Math.min(nextIdx, btns.length-1));
+  quizOptionFocus = safeIdx;
+  getQuizOptionButtons().forEach(btn=>btn.classList.remove('kbd-focus'));
+  const activeBtn = btns[safeIdx];
+  if(activeBtn){
+    activeBtn.classList.add('kbd-focus');
+    if(focusDom) activeBtn.focus({preventScroll:true});
+  }
+}
+
 document.addEventListener('click', function(e){
   const panel = document.getElementById('shortcut-panel');
   const btn = document.getElementById('shortcut-btn');
@@ -1839,7 +1865,35 @@ if(key==='b'){ snakeToggleWrap(); e.preventDefault(); return; }
     const canAnswer = userAns[cur]===null || (mode==='exam' && examCfg.corrMode==='final' && !examCfg.hardcore);
     if(canAnswer){
       const btns = document.querySelectorAll('#q-options .opt-btn');
-      if(btns[letterMap[key]]) btns[letterMap[key]].click();
+      if(btns[letterMap[key]]){
+        setQuizOptionFocus(letterMap[key], false);
+        btns[letterMap[key]].click();
+      }
+      e.preventDefault();
+      return;
+    }
+  }
+
+  if(quizActive && (e.key==='ArrowDown' || e.key==='ArrowUp')){
+    const btns = getQuizOptionButtons().filter(btn=>!btn.disabled);
+    if(btns.length){
+      const delta = e.key==='ArrowDown' ? 1 : -1;
+      const currentIdx = btns.findIndex(btn=>btn.classList.contains('kbd-focus'));
+      const baseIdx = currentIdx >= 0 ? currentIdx : quizOptionFocus;
+      setQuizOptionFocus(baseIdx + delta, true);
+      e.preventDefault();
+      return;
+    }
+  }
+
+  if(quizActive && e.key==='Enter'){
+    const btns = getQuizOptionButtons().filter(btn=>!btn.disabled);
+    if(btns.length){
+      const currentIdx = btns.findIndex(btn=>btn.classList.contains('kbd-focus'));
+      const baseIdx = currentIdx >= 0 ? currentIdx : quizOptionFocus;
+      const safeIdx = Math.max(0, Math.min(baseIdx, btns.length-1));
+      setQuizOptionFocus(safeIdx, true);
+      btns[safeIdx].click();
       e.preventDefault();
       return;
     }
@@ -1858,16 +1912,21 @@ if(key==='b'){ snakeToggleWrap(); e.preventDefault(); return; }
   // Space to reveal flashcard
   if(e.key===' ' && flashActive){ flashReveal(); e.preventDefault(); return; }
   // F to flag
-  if(key==='f' && quizActive){ toggleFlag(); e.preventDefault(); }
+  if(key==='f' && quizActive && !(mode==='exam' && examCfg.hardcore)){ toggleFlag(); e.preventDefault(); }
 });
 
 /* ══ SWIPE SUPPORT ══ */
 (function(){
   let touchStartX=0, touchStartY=0;
+  let touchStartTarget=null;
+  function isQuestionNavTouchTarget(target){
+    return !!(target && target.closest && target.closest('#qnav-wrap'));
+  }
   const main = document.querySelector('main');
   main.addEventListener('touchstart',function(e){
     touchStartX=e.changedTouches[0].screenX;
     touchStartY=e.changedTouches[0].screenY;
+    touchStartTarget=e.target;
   },{passive:true});
   main.addEventListener('touchend',function(e){
     const quizActive = document.getElementById('scr-quiz').classList.contains('active');
@@ -1875,6 +1934,7 @@ if(key==='b'){ snakeToggleWrap(); e.preventDefault(); return; }
     const snakeActive = document.getElementById('scr-snake').classList.contains('active');
     if(!quizActive && !flashActive) return;
     if(snakeActive) return;
+    if(isQuestionNavTouchTarget(touchStartTarget) || isQuestionNavTouchTarget(e.target)) return;
     const dx=e.changedTouches[0].screenX-touchStartX;
     const dy=e.changedTouches[0].screenY-touchStartY;
     if(Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)) return; // too short or vertical
@@ -3019,7 +3079,10 @@ function renderQ(idx){
   displayOpts.forEach((opt,i)=>{
     const origIdx=q._shuffled[i];
     const btn=document.createElement('button');
+    btn.type='button';
     btn.className='opt-btn';
+    btn.dataset.displayIdx=String(i);
+    btn.dataset.origIdx=String(origIdx);
     btn.innerHTML=`<span class="opt-letter">${letters[i]}.</span><span>${opt}</span>`;
     if(showResult){
       btn.disabled=true;
@@ -3029,12 +3092,14 @@ function renderQ(idx){
     } else if(answered&&isExam&&examCfg.corrMode==='final' && !examCfg.hardcore){
       // Show selected but keep clickable to allow changing
       if(i===userDisplayAns){btn.style.borderColor='var(--gold)';btn.querySelector('.opt-letter').style.color='var(--gold)';}
-      btn.onclick=()=>selectAnswer(idx,origIdx);
+      btn.onclick=()=>{ quizOptionFocus=i; selectAnswer(idx,origIdx); };
     } else {
-      btn.onclick=()=>selectAnswer(idx,origIdx);
+      btn.onclick=()=>{ quizOptionFocus=i; selectAnswer(idx,origIdx); };
     }
     optsDiv.appendChild(btn);
   });
+  getQuizOptionButtons().forEach(btn=>btn.classList.remove('kbd-focus'));
+  quizOptionFocus = userDisplayAns !== null ? userDisplayAns : 0;
 
   // Feedback
   const fb=document.getElementById('q-feedback');
