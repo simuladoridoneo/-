@@ -250,6 +250,7 @@ main{max-width:780px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
   .nav-row{flex-direction:column;align-items:stretch;}
   .btn-row{gap:.7rem;}
   .btn-nav,.btn-primary,.btn-secondary,.retry-wrong-btn{width:100%;text-align:center;}
+  #credits-modal .btn-secondary{width:auto;min-width:0;display:inline-flex;justify-content:center;}
   #scr-mod-start h2{font-size:1.7rem;}
   .cfg-opts{flex-direction:column;align-items:stretch;}
   .cfg-btn{text-align:center;}
@@ -267,6 +268,7 @@ main{max-width:780px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
   .question-card,.flash-card{padding:1rem .85rem;}
   .home-card{padding:1rem .9rem;}
   .btn-primary,.btn-secondary,.retry-wrong-btn{padding:.85rem 1rem;font-size:.82rem;}
+  #credits-modal .btn-secondary{padding:.32rem .75rem;font-size:.66rem;}
   .qnav-dot{width:26px;height:26px;font-size:.65rem;}
   .snake-touch-btn{width:52px;height:52px;border-radius:12px;}
 }
@@ -3526,7 +3528,7 @@ buildFlashGrid();
 renderRadiography();
 const totalQCount = MOD_Q.slice(1).reduce((sum,qs)=>sum+qs.length,0);
 const totalMods   = Object.keys(MOD_INFO).length;
-document.getElementById('home-tagline').textContent  = `${totalQCount} preguntas · ${totalMods} módulos · diseñado para aprobar`;
+document.getElementById('home-tagline').textContent  = `${totalQCount} preguntas · ${totalMods} módulos`;
 document.getElementById('home-mod-meta').textContent  = `${totalMods} módulos · ${totalQCount} preguntas`;
 buildModGrid();
 renderShortcutHelp('scr-home');
