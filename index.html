@@ -602,7 +602,7 @@ body.light .qnav-dot.flagged-dot{box-shadow:0 0 0 2px #8a6518, 0 0 0 4px rgba(17
         <strong>Normal</strong> · Configuración elegida
       </button>
       <button class="cfg-btn" data-group="hardcore" data-val="1" onclick="selectCfg(this,'hardcore')">
-        <strong>Muerte súbita</strong> · 1 error termina · 15s por pregunta
+        <strong>Muerte súbita</strong> · 1 error termina · 20s por pregunta
         <span class="hardcore-best-chip" id="hardcore-best">High Score: 0</span>
       </button>
     </div>
@@ -2995,7 +2995,7 @@ function startTimerLoop(){
 
 function startHardcoreQuestionTimer(){
   const timerEl=document.getElementById('timer');
-  secsLeft = 15;
+  secsLeft = 20;
   timerEl.style.display='inline';
   updateTimerDisplay();
   startTimerLoop();
@@ -3073,7 +3073,7 @@ function startExam(){
 
   showScreen('scr-quiz');
   document.getElementById('hdr-sub').textContent = examCfg.hardcore
-    ? `${examQ.length} preguntas · 15s por pregunta`
+    ? `${examQ.length} preguntas · 20s por pregunta`
     : `${examQ.length} preguntas · ${PASS_PCT}% para aprobar`;
   renderQ(0);
 }
@@ -3662,7 +3662,7 @@ document.addEventListener('DOMContentLoaded', function(){
       '<p><strong>⚡ Repaso Rápido (Flashcards):</strong> Es tu primer contacto con la información. Acá vas a ver la pregunta y, directamente, la respuesta correcta. Está pensado para que leas a conciencia y tu cerebro fije el concepto real antes de ponerlo a prueba.</p>',
       '<p><strong>📚 Práctica por Módulos:</strong> El campo de entrenamiento. Acá vas a practicar preguntas específicas de un solo tema (por ejemplo, solo Marco Normativo) a tu propio ritmo. Ya aparecen las opciones falsas, por lo que vas a entrenar tu capacidad de descarte.</p>',
       '<p><strong>📝 Simulador de Examen:</strong> La prueba de fuego. Es una réplica del examen oficial de la CNV: 60 preguntas aleatorias mezclando todos los módulos, el reloj corriendo en tu contra y la exigencia de lograr un 70% de aciertos para aprobar. Podés usarlo para medir tu nivel general incluso si todavía no terminaste de estudiar todos los módulos; ¡es una excelente forma de ir perdiéndole el miedo al reloj y ver dónde estás parado!</p>',
-      '<p><strong>🔥 Modo Muerte Súbita:</strong> Una configuración extrema dentro del Simulador. Tenés solo 15 segundos por pregunta y, al primer error, el examen termina. Es ideal para entrenar tu agilidad mental y trabajar bajo presión cuando ya dominás los temas.</p>',
+      '<p><strong>🔥 Modo Muerte Súbita:</strong> Una configuración extrema dentro del Simulador. Tenés solo 20 segundos por pregunta y, al primer error, el examen termina. Es ideal para entrenar tu agilidad mental y trabajar bajo presión cuando ya dominás los temas.</p>',
       '<p><strong>🐍 Break de Estudio (Snake):</strong> Estudiar sin descanso agota. Acá tenés el clásico juego de la viborita para despejar la cabeza un par de minutos, bajar la ansiedad y volver al temario con más foco.</p>',
       '<p class="guide-section-title">🚀 Plan de Acción</p>',
       '<p>Sabemos que cada persona tiene su propio ritmo de estudio, pero si querés optimizar tu tiempo y asegurarte de retener los conceptos, te recomendamos seguir esta Fórmula Óptima:</p>',
