@@ -1829,7 +1829,7 @@ function shortcutRowsFor(ctx){
   ];
   if(ctx==='flash') return [
     ['← / →','Anterior / siguiente'],
-    ['Espacio','Mostrar respuesta']
+    ['Espacio / Enter','Mostrar respuesta']
   ];
   if(ctx==='snake') return [
     ['WASD / Flechas','Mover serpiente'],
@@ -2001,8 +2001,8 @@ if(key==='b'){ snakeToggleWrap(); e.preventDefault(); return; }
     if(flashActive){ flashNav(-1); e.preventDefault(); return; }
     e.preventDefault();
   }
-  // Space to reveal flashcard
-  if(e.key===' ' && flashActive){ flashReveal(); e.preventDefault(); return; }
+  // Space or Enter to reveal flashcard
+  if((e.key===' ' || e.key==='Enter') && flashActive){ flashReveal(); e.preventDefault(); return; }
   // F to flag
   if(key==='f' && quizActive && !(mode==='exam' && examCfg.hardcore)){ toggleFlag(); e.preventDefault(); }
 });
