@@ -157,7 +157,7 @@ main{max-width:780px;margin:0 auto;padding:2.5rem 1.5rem 6rem;}
 .question-card{background:var(--navy-mid);border:1px solid var(--navy-light);border-radius:14px;padding:2rem;margin-bottom:1.2rem;}
 .q-text{font-size:1rem;font-weight:500;line-height:1.65;margin-bottom:1.5rem;}
 .options{display:flex;flex-direction:column;gap:.6rem;}
-.opt-btn{background:var(--navy);border:1px solid var(--navy-light);color:var(--white);font-family:var(--font-body);font-size:.9rem;padding:.85rem 1.1rem;border-radius:8px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s;display:flex;align-items:flex-start;gap:.8rem;line-height:1.5;width:100%;}
+.opt-btn{background:var(--navy);border:1px solid var(--navy-light);color:var(--white);font-family:var(--font-body);font-size:.9rem;padding:.85rem 1.1rem;border-radius:8px;cursor:pointer;text-align:left;transition:border-color .15s,background .15s;display:flex;align-items:flex-start;gap:.8rem;line-height:1.5;width:100%;scroll-margin-top:110px;scroll-margin-bottom:34px;}
 .opt-btn:hover:not(:disabled){border-color:var(--gold);background:rgba(201,168,76,.06);}
 .opt-letter{font-family:'JetBrains Mono',monospace;font-size:.75rem;color:var(--gold);min-width:18px;margin-top:1px;font-weight:500;flex-shrink:0;}
 .opt-btn.correct{background:var(--correct-bg);border-color:var(--green);color:#aaffcc;}
@@ -660,7 +660,7 @@ body.light .qnav-dot.flagged-dot{box-shadow:0 0 0 2px #8a6518, 0 0 0 4px rgba(17
   </div>
   <div class="nav-row" style="margin-top:1.2rem;">
     <button class="btn-nav" id="flash-prev" onclick="flashNav(-1)">← Anterior</button>
-    <button class="btn-nav gold" id="flash-next" onclick="flashNav(1)">Siguiente →</button>
+    <button class="btn-nav gold" id="flash-next" onclick="flashNextAction()">Siguiente →</button>
   </div>
 </div>
 
@@ -1878,6 +1878,24 @@ function canUseKeyboardOptionFocus(){
   return !window.matchMedia || window.matchMedia('(hover: hover) and (pointer: fine)').matches;
 }
 
+function keepQuizOptionInView(btn){
+  if(!btn || !canUseKeyboardOptionFocus()) return;
+  const header = document.querySelector('header');
+  const headerBottom = header ? header.getBoundingClientRect().bottom : 0;
+  const rect = btn.getBoundingClientRect();
+  const topLimit = headerBottom + 10;
+  const bottomLimit = window.innerHeight - 28;
+  if(rect.top < topLimit || rect.bottom > bottomLimit){
+    const block = rect.top < topLimit ? 'start' : 'end';
+    btn.scrollIntoView({ behavior:'smooth', block, inline:'nearest' });
+  }
+}
+
+function scrollQuizViewport(delta){
+  if(!delta) return;
+  window.scrollBy({ top: delta, behavior:'smooth' });
+}
+
 function setQuizOptionFocus(nextIdx, focusDom){
   const btns = getQuizOptionButtons().filter(btn=>!btn.disabled);
   if(!btns.length){
@@ -1892,6 +1910,7 @@ function setQuizOptionFocus(nextIdx, focusDom){
   if(activeBtn && canUseKeyboardOptionFocus()){
     activeBtn.classList.add('kbd-focus');
     if(focusDom) activeBtn.focus({preventScroll:true});
+    keepQuizOptionInView(activeBtn);
   }
 }
 
@@ -1946,6 +1965,13 @@ if(key==='b'){ snakeToggleWrap(); e.preventDefault(); return; }
       const delta = e.key==='ArrowDown' ? 1 : -1;
       const currentIdx = btns.findIndex(btn=>btn.classList.contains('kbd-focus'));
       const baseIdx = currentIdx >= 0 ? currentIdx : quizOptionFocus;
+      const isAtBoundary = (delta < 0 && baseIdx <= 0) || (delta > 0 && baseIdx >= btns.length-1);
+      if(isAtBoundary){
+        setQuizOptionFocus(baseIdx, true);
+        scrollQuizViewport(delta > 0 ? 140 : -140);
+        e.preventDefault();
+        return;
+      }
       setQuizOptionFocus(baseIdx + delta, true);
       e.preventDefault();
       return;
@@ -2144,10 +2170,12 @@ function renderFlash(){
   document.getElementById('flash-counter').textContent = (flashIdx+1) + ' / ' + flashQs.length;
   document.getElementById('flash-q').textContent = q.q;
   const aDiv = document.getElementById('flash-a');
+  const nextBtn = document.getElementById('flash-next');
   aDiv.textContent = '✓ ' + q.opts[q.answer];
   aDiv.style.display = flashRevealed ? 'block' : 'none';
   document.getElementById('flash-hint').style.display = flashRevealed ? 'none' : 'block';
   document.getElementById('flash-prev').disabled = flashIdx===0;
+  nextBtn.textContent = flashIdx===flashQs.length-1 ? 'Ir a la práctica →' : 'Siguiente →';
 }
 
 function flashReveal(){
@@ -2163,6 +2191,19 @@ function flashNav(dir){
   if(flashIdx >= flashQs.length) flashIdx = flashQs.length - 1;
   flashRevealed = false;
   renderFlash();
+}
+
+function flashNextAction(){
+  if(flashIdx===flashQs.length-1){
+    openFlashPractice();
+    return;
+  }
+  flashNav(1);
+}
+
+function openFlashPractice(){
+  if(!flashMod) return;
+  openModule(flashMod);
 }
 
 /* ══ RADIOGRAPHY ══ */
